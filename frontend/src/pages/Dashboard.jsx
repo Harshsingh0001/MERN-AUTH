@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -36,13 +35,22 @@ const Dashboard = () => {
           <span>AuthApp</span>
         </div>
 
-        <button
-          className="simple-logout"
-          onClick={handleLogout}
-          disabled={loggingOut}
-        >
-          {loggingOut ? "Logging out..." : "Logout"}
-        </button>
+        <div>
+          <button
+            onClick={() => navigate("/sessions")}
+            style={{ marginRight: "10px" }}
+          >
+            Manage Sessions
+          </button>
+
+          <button
+            className="simple-logout"
+            onClick={handleLogout}
+            disabled={loggingOut}
+          >
+            {loggingOut ? "Logging out..." : "Logout"}
+          </button>
+        </div>
       </nav>
 
       {/* HERO */}

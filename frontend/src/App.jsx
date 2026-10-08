@@ -16,6 +16,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerifyForgotPasswordOTP from "./pages/VerifyForgotPasswordOTP";
 import ResetPassword from "./pages/ResetPassword";
+import Sessions from "./pages/Sessions";
 
 function App() {
   return (
@@ -36,6 +37,14 @@ function App() {
                 <Dashboard />
               </ProtectedRoute>
             }
+          />
+          <Route
+            path="/sessions"
+            element={
+              <ProtectedRoute>
+                <Sessions />
+              </ProtectedRoute>
+           }
           />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-forgot-password-otp" element={<VerifyForgotPasswordOTP />} />

@@ -67,9 +67,16 @@ const revokeAllUserSessions = async (userId) => {
   );
 };
 
+const getUserSessions = async (userId) => {
+  return Session.find({ user: userId })
+    .sort({ createdAt: -1 })
+    .select("-refreshTokenHash");
+};
+
 module.exports = {
   createSession,
   verifySessionRefreshToken,
   revokeSession,
   revokeAllUserSessions,
+  getUserSessions,
 };

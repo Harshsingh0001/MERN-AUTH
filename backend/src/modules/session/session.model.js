@@ -16,8 +16,7 @@ const sessionSchema = new mongoose.Schema(
 
     jti: {
       type: String,
-      required: true,
-      unique: true,
+      default: null,
       index: true,
     },
 

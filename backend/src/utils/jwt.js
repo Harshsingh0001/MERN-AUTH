@@ -1,10 +1,11 @@
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 
-const generateAccessToken = (userId) => {
+const jwt = require("jsonwebtoken");
+
+const generateAccessToken = (userId, jti) => {
   return jwt.sign(
     {
       userId,
+      jti,
     },
     process.env.JWT_ACCESS_SECRET,
     {
@@ -13,11 +14,11 @@ const generateAccessToken = (userId) => {
   );
 };
 
-const generateRefreshToken = (userId) => {
+const generateRefreshToken = (userId, jti) => {
   return jwt.sign(
     {
       userId,
-      jti: crypto.randomUUID(),
+      jti,
     },
     process.env.JWT_REFRESH_SECRET,
     {
@@ -27,17 +28,11 @@ const generateRefreshToken = (userId) => {
 };
 
 const verifyAccessToken = (token) => {
-  return jwt.verify(
-    token,
-    process.env.JWT_ACCESS_SECRET
-  );
+  return jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 };
 
 const verifyRefreshToken = (token) => {
-  return jwt.verify(
-    token,
-    process.env.JWT_REFRESH_SECRET
-  );
+  return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 };
 
 module.exports = {

@@ -6,6 +6,7 @@ const xssSanitize = require("./middleware/xssSanitize");
 const errorHandler = require("./middleware/errorHandler");
 
 const authRoutes = require("./modules/auth/auth.routes");
+const sessionRoutes = require("./modules/session/session.routes");
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/sessions", sessionRoutes);
 app.use(errorHandler);
 
 module.exports = app;
