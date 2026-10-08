@@ -1,18 +1,33 @@
 const nodemailer = require("nodemailer");
+const dns = require("dns").promises;
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: 465,
-  secure: true,
-  family: 4,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+let transporter;
+
+const getTransporter = async () => {
+  if (!transporter) {
+    const [ipv4Address] = await dns.resolve4(process.env.EMAIL_HOST);
+
+    transporter = nodemailer.createTransport({
+      host: ipv4Address,
+      port: 465,
+      secure: true,
+      tls: {
+        servername: process.env.EMAIL_HOST,
+      },
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+  }
+
+  return transporter;
+};
 
 const sendOTPEmail = async (email, otp) => {
-  await transporter.sendMail({
+  const emailTransporter = await getTransporter();
+
+  await emailTransporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: email,
     subject: "Your Authentication OTP",
