@@ -1,34 +1,10 @@
-const nodemailer = require("nodemailer");
-const dns = require("dns").promises;
+const { Resend } = require("resend");
 
-let transporter;
-
-const getTransporter = async () => {
-  if (!transporter) {
-    const [ipv4Address] = await dns.resolve4(process.env.EMAIL_HOST);
-
-    transporter = nodemailer.createTransport({
-      host: ipv4Address,
-      port: 465,
-      secure: true,
-      tls: {
-        servername: process.env.EMAIL_HOST,
-      },
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-  }
-
-  return transporter;
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendOTPEmail = async (email, otp) => {
-  const emailTransporter = await getTransporter();
-
-  await emailTransporter.sendMail({
-    from: process.env.EMAIL_FROM,
+  await resend.emails.send({
+    from: "MERN Auth <onboarding@resend.dev>",
     to: email,
     subject: "Your Authentication OTP",
     text: `Your OTP is ${otp}. This OTP is valid for 5 minutes.`,
