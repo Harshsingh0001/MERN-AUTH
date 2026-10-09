@@ -144,11 +144,10 @@ const Dashboard = () => {
 
       {/* CTA */}
       <section className="simple-cta">
-        <h2>Your account is ready.</h2>
+        <h2>Bitmax.</h2>
 
         <p>
-          You have successfully completed the
-          authentication process.
+          .....
         </p>
       </section>
 

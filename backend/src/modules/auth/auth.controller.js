@@ -3,6 +3,7 @@ const User = require("../user/user.model");
 const bcrypt = require("bcrypt");
 
 const { sendOTPEmail } = require("../../services/email.service");
+const crypto = require("crypto"); 
 
 const {
   validateRegisterInput,
@@ -394,16 +395,26 @@ if (user.lockUntil && new Date() >= user.lockUntil) {
     user.lockUntil = null;
     await user.save();
 
-    // 6. Generate tokens
-    const accessToken = generateAccessToken(user._id.toString());
+    
+    // 6. Generate tokens with a unique session ID
+    const jti = crypto.randomUUID();
 
-    const refreshToken = generateRefreshToken(user._id.toString());
+    const accessToken = generateAccessToken(
+      user._id.toString(),
+      jti
+    );
+
+    const refreshToken = generateRefreshToken(
+      user._id.toString(),
+      jti
+    );
 
     const decodedRefreshToken = verifyRefreshToken(refreshToken);
 
     const expiresAt = new Date(
-     Date.now() + 7 * 24 * 60 * 60 * 1000
+      Date.now() + 7 * 24 * 60 * 60 * 1000
     );
+
 
 await createSession({
   userId: user._id,
@@ -543,24 +554,28 @@ const loginWithPhoneOTP = async (req, res) => {
   }
 };
 
+
 const verifyLoginOTP = async (req, res) => {
   try {
-    const { userId, otp } = req.body;
+    const { email, otp } = req.body;
 
-    const validation = validateVerifyLoginOTPInput({
-      userId,
-      otp,
-    });
-
-    if (!validation.isValid) {
+    // 1. Validate email and OTP
+    if (
+      !email ||
+      typeof email !== "string" ||
+      !otp ||
+      !/^\d{6}$/.test(String(otp))
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
-        errors: validation.errors,
+        message: "Valid email and 6-digit OTP are required",
       });
     }
 
-    const user = await User.findById(userId);
+    // 2. Find user
+    const user = await User.findOne({
+      email: email.trim().toLowerCase(),
+    });
 
     if (!user) {
       return res.status(404).json({
@@ -569,6 +584,7 @@ const verifyLoginOTP = async (req, res) => {
       });
     }
 
+    // 3. Check account verification
     if (!user.isVerified) {
       return res.status(403).json({
         success: false,
@@ -576,9 +592,10 @@ const verifyLoginOTP = async (req, res) => {
       });
     }
 
+    // 4. Verify OTP before generating tokens
     const result = await verifyUserOTP(
       user,
-      otp,
+      String(otp),
       "LOGIN"
     );
 
@@ -589,11 +606,20 @@ const verifyLoginOTP = async (req, res) => {
       });
     }
 
-    const accessToken = generateAccessToken(user._id.toString());
-    const refreshToken = generateRefreshToken(user._id.toString());
+    // 5. Generate tokens with the same session ID
+    const jti = crypto.randomUUID();
 
-    const decodedRefreshToken = verifyRefreshToken(refreshToken);
+    const accessToken = generateAccessToken(
+      user._id.toString(),
+      jti
+    );
 
+    const refreshToken = generateRefreshToken(
+      user._id.toString(),
+      jti
+    );
+
+    // 6. Create session
     const expiresAt = new Date(
       Date.now() + 7 * 24 * 60 * 60 * 1000
     );
@@ -601,12 +627,13 @@ const verifyLoginOTP = async (req, res) => {
     await createSession({
       userId: user._id,
       refreshToken,
-      jti: decodedRefreshToken.jti,
+      jti,
       expiresAt,
       userAgent: req.get("user-agent"),
       ipAddress: req.ip,
     });
 
+    // 7. Return success
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -627,6 +654,7 @@ const verifyLoginOTP = async (req, res) => {
     });
   }
 };
+
 
 const verifyPhoneLoginOTP = async (req, res) => {
   try {
@@ -674,16 +702,17 @@ const verifyPhoneLoginOTP = async (req, res) => {
       });
     }
 
+    
+    const jti = crypto.randomUUID();
+
     const accessToken = generateAccessToken(
-      user._id.toString()
+      user._id.toString(),
+      jti
     );
 
     const refreshToken = generateRefreshToken(
-      user._id.toString()
-    );
-
-    const decodedRefreshToken = verifyRefreshToken(
-      refreshToken
+      user._id.toString(),
+      jti
     );
 
     const expiresAt = new Date(
@@ -693,11 +722,12 @@ const verifyPhoneLoginOTP = async (req, res) => {
     await createSession({
       userId: user._id,
       refreshToken,
-      jti: decodedRefreshToken.jti,
+      jti,
       expiresAt,
       userAgent: req.get("user-agent"),
       ipAddress: req.ip,
     });
+
 
     return res.status(200).json({
       success: true,
@@ -1089,7 +1119,7 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    const newAccessToken = generateAccessToken(userId);
+    const newAccessToken = generateAccessToken(userId, jti);
 
     return res.status(200).json({
       success: true,
